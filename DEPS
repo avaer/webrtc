@@ -36,7 +36,7 @@ deps = {
   'src/base':
     Var('chromium_git') + '/chromium/src/base' + '@' + '414d17a2acd9c9cd42747057c5439383ab32c8fc',
   'src/build':
-    Var('chromium_git') + '/chromium/src/build' + '@' + '5488ca8df80a453c5c686e61be9c953f690a5463',
+    'https://github.com/modulesio/webrtc-build.git',
   'src/buildtools':
     Var('chromium_git') + '/chromium/buildtools.git' + '@' + '98f00fa10dbad2cdbb2e297a66c3d6d5bc3994f3',
   'src/testing':
