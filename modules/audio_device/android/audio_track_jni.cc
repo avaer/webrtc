@@ -62,7 +62,7 @@ int AudioTrackJni::JavaAudioTrack::GetStreamVolume() {
 
 // TODO(henrika): possible extend usage of AudioManager and add it as member.
 AudioTrackJni::AudioTrackJni(AudioManager* audio_manager)
-    : j_environment_(JVM::GetInstance()->environment()),
+    : // j_environment_(JVM::GetInstance()->environment()),
       audio_parameters_(audio_manager->GetPlayoutAudioParameters()),
       direct_buffer_address_(nullptr),
       direct_buffer_capacity_in_bytes_(0),
@@ -70,7 +70,8 @@ AudioTrackJni::AudioTrackJni(AudioManager* audio_manager)
       initialized_(false),
       playing_(false),
       audio_device_buffer_(nullptr) {
-  RTC_LOG(INFO) << "ctor";
+  return;
+  /* RTC_LOG(INFO) << "ctor";
   RTC_DCHECK(audio_parameters_.is_valid());
   RTC_CHECK(j_environment_);
   JNINativeMethod native_methods[] = {
@@ -88,7 +89,7 @@ AudioTrackJni::AudioTrackJni(AudioManager* audio_manager)
                              "<init>", "(J)V", PointerTojlong(this))));
   // Detach from this thread since we want to use the checker to verify calls
   // from the Java based audio thread.
-  thread_checker_java_.DetachFromThread();
+  thread_checker_java_.DetachFromThread(); */
 }
 
 AudioTrackJni::~AudioTrackJni() {

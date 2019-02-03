@@ -15,15 +15,16 @@
 namespace webrtc {
 
 BuildInfo::BuildInfo()
-    : j_environment_(JVM::GetInstance()->environment()),
+    : /* j_environment_(JVM::GetInstance()->environment()),
       j_build_info_(
-          JVM::GetInstance()->GetClass("org/webrtc/voiceengine/BuildInfo")) {}
+          JVM::GetInstance()->GetClass("org/webrtc/voiceengine/BuildInfo")) */ j_build_info_(nullptr, nullptr) {}
 
 std::string BuildInfo::GetStringFromJava(const char* name) {
-  jmethodID id = j_build_info_.GetStaticMethodId(name, "()Ljava/lang/String;");
+  return std::string();
+  /* jmethodID id = j_build_info_.GetStaticMethodId(name, "()Ljava/lang/String;");
   jstring j_string = static_cast<jstring>(
       j_build_info_.CallStaticObjectMethod(id));
-  return j_environment_->JavaToStdString(j_string);
+  return j_environment_->JavaToStdString(j_string); */
 }
 
 std::string BuildInfo::GetDeviceModel() {
@@ -51,9 +52,10 @@ std::string BuildInfo::GetBuildRelease() {
 }
 
 SdkCode BuildInfo::GetSdkVersion() {
-  jmethodID id = j_build_info_.GetStaticMethodId("getSdkVersion", "()I");
+  return static_cast<SdkCode>(1);
+  /* jmethodID id = j_build_info_.GetStaticMethodId("getSdkVersion", "()I");
   jint j_version = j_build_info_.CallStaticIntMethod(id);
-  return static_cast<SdkCode>(j_version);
+  return static_cast<SdkCode>(j_version); */
 }
 
 }  // namespace webrtc
