@@ -52,6 +52,8 @@
 #include "modules/audio_device/dummy/audio_device_dummy.h"
 #include "modules/audio_device/dummy/file_audio_device.h"
 
+#include <iostream>
+
 #define CHECKinitialized_() \
   {                         \
     if (!initialized_) {    \

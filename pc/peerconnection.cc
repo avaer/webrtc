@@ -868,6 +868,8 @@ bool PeerConnection::Initialize(
     PeerConnectionObserver* observer) {
   TRACE_EVENT0("webrtc", "PeerConnection::Initialize");
 
+  std::cout << "PeerConnection::Initialize 1 " << (bool)configuration.ice_regather_interval_range << " " << (configuration.continual_gathering_policy == GATHER_ONCE) << std::endl;
+
   RTCError config_error = ValidateConfiguration(configuration);
   if (!config_error.ok()) {
     RTC_LOG(LS_ERROR) << "Invalid configuration: " << config_error.message();

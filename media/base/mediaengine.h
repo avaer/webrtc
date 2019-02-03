@@ -29,6 +29,8 @@
 #include "media/base/videocommon.h"
 #include "rtc_base/platform_file.h"
 
+#include <iostream>
+
 namespace webrtc {
 class AudioDeviceModule;
 class AudioMixer;
@@ -94,7 +96,9 @@ class CompositeMediaEngine : public MediaEngineInterface {
                        std::tuple<Args2...> second_args)
       : engines_(std::piecewise_construct,
                  std::move(first_args),
-                 std::move(second_args)) {}
+                 std::move(second_args)) {
+    std::cout << "CompositeMediaEngine::CompositeMediaEngine 1" << std::endl;
+  }
 
   virtual ~CompositeMediaEngine() {}
   virtual bool Init() {

@@ -29,6 +29,8 @@
 #include "rtc_base/win32.h"
 #endif
 
+#include <iostream>
+
 namespace rtc {
 
 class Thread;
@@ -181,9 +183,12 @@ class RTC_LOCKABLE Thread : public MessageQueue {
   // See ScopedDisallowBlockingCalls for details.
   template <class ReturnT, class FunctorT>
   ReturnT Invoke(const Location& posted_from, FunctorT&& functor) {
+    std::cout << "Thread::Invoke 1" << std::endl;
     FunctorMessageHandler<ReturnT, FunctorT> handler(
         std::forward<FunctorT>(functor));
+    std::cout << "Thread::Invoke 2" << std::endl;
     InvokeInternal(posted_from, &handler);
+    std::cout << "Thread::Invoke 3" << std::endl;
     return handler.MoveResult();
   }
 

@@ -48,6 +48,8 @@
 #include "system_wrappers/include/file_wrapper.h"
 #include "system_wrappers/include/metrics.h"
 
+#include <iostream>
+
 // Check to verify that the define for the intelligibility enhancer is properly
 // set.
 #if !defined(WEBRTC_INTELLIGIBILITY_ENHANCER) || \
@@ -349,19 +351,24 @@ AudioProcessingBuilder& AudioProcessingBuilder::SetEchoDetector(
 }
 
 AudioProcessing* AudioProcessingBuilder::Create() {
+  std::cout << "AudioProcessingBuilder::Create 1 1" << std::endl;
   webrtc::Config config;
+  std::cout << "AudioProcessingBuilder::Create 1 2" << std::endl;
   return Create(config);
 }
 
 AudioProcessing* AudioProcessingBuilder::Create(const webrtc::Config& config) {
+  std::cout << "AudioProcessingBuilder::Create 2 1" << std::endl;
   AudioProcessingImpl* apm = new rtc::RefCountedObject<AudioProcessingImpl>(
       config, std::move(capture_post_processing_),
       std::move(render_pre_processing_), std::move(echo_control_factory_),
       std::move(echo_detector_), nonlinear_beamformer_.release());
+  std::cout << "AudioProcessingBuilder::Create 2 2" << std::endl;
   if (apm->Initialize() != AudioProcessing::kNoError) {
     delete apm;
     apm = nullptr;
   }
+  std::cout << "AudioProcessingBuilder::Create 2 3" << std::endl;
   return apm;
 }
 
@@ -406,45 +413,68 @@ AudioProcessingImpl::AudioProcessingImpl(
       capture_nonlocked_(config.Get<Beamforming>().enabled,
                          config.Get<Intelligibility>().enabled) {
   {
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 1" << std::endl;
+
     rtc::CritScope cs_render(&crit_render_);
     rtc::CritScope cs_capture(&crit_capture_);
+
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 2" << std::endl;
 
     // Mark Echo Controller enabled if a factory is injected.
     capture_nonlocked_.echo_controller_enabled =
         static_cast<bool>(echo_control_factory_);
 
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3" << std::endl;
+
     public_submodules_->echo_cancellation.reset(
         new EchoCancellationImpl(&crit_render_, &crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.1" << std::endl;
     public_submodules_->echo_control_mobile.reset(
         new EchoControlMobileImpl(&crit_render_, &crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.2" << std::endl;
     public_submodules_->gain_control.reset(
         new GainControlImpl(&crit_capture_, &crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.3" << std::endl;
     public_submodules_->level_estimator.reset(
         new LevelEstimatorImpl(&crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.4" << std::endl;
     public_submodules_->noise_suppression.reset(
         new NoiseSuppressionImpl(&crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.5" << std::endl;
     public_submodules_->voice_detection.reset(
         new VoiceDetectionImpl(&crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.6" << std::endl;
     public_submodules_->gain_control_for_experimental_agc.reset(
         new GainControlForExperimentalAgc(
             public_submodules_->gain_control.get(), &crit_capture_));
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 3.7" << std::endl;
+
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 4" << std::endl;
 
     // If no echo detector is injected, use the ResidualEchoDetector.
     if (!private_submodules_->echo_detector) {
       private_submodules_->echo_detector.reset(new ResidualEchoDetector());
     }
 
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 5" << std::endl;
+
     // TODO(alessiob): Move the injected gain controller once injection is
     // implemented.
     private_submodules_->gain_controller2.reset(new GainController2());
+
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 6" << std::endl;
 
     RTC_LOG(LS_INFO) << "Capture post processor activated: "
                      << !!private_submodules_->capture_post_processor
                      << "\nRender pre processor activated: "
                      << !!private_submodules_->render_pre_processor;
+
+    std::cout << "AudioProcessingImpl::AudioProcessingImpl 7" << std::endl;
   }
 
   SetExtraOptions(config);
+
+  std::cout << "AudioProcessingImpl::AudioProcessingImpl 8" << std::endl;
 }
 
 AudioProcessingImpl::~AudioProcessingImpl() {
@@ -719,18 +749,29 @@ void AudioProcessingImpl::ApplyConfig(const AudioProcessing::Config& config) {
 }
 
 void AudioProcessingImpl::SetExtraOptions(const webrtc::Config& config) {
+  std::cout << "AudioProcessingImpl::SetExtraOptions 1" << std::endl;
+
   // Run in a single-threaded manner when setting the extra options.
   rtc::CritScope cs_render(&crit_render_);
   rtc::CritScope cs_capture(&crit_capture_);
 
+  std::cout << "AudioProcessingImpl::SetExtraOptions 2" << std::endl;
+
   public_submodules_->echo_cancellation->SetExtraOptions(config);
+
+  std::cout << "AudioProcessingImpl::SetExtraOptions 3" << std::endl;
 
   if (capture_.transient_suppressor_enabled !=
       config.Get<ExperimentalNs>().enabled) {
+    std::cout << "AudioProcessingImpl::SetExtraOptions 4" << std::endl;
     capture_.transient_suppressor_enabled =
         config.Get<ExperimentalNs>().enabled;
+    std::cout << "AudioProcessingImpl::SetExtraOptions 5" << std::endl;
     InitializeTransient();
+    std::cout << "AudioProcessingImpl::SetExtraOptions 6" << std::endl;
   }
+
+  std::cout << "AudioProcessingImpl::SetExtraOptions 7" << std::endl;
 
 #if WEBRTC_INTELLIGIBILITY_ENHANCER
   if (capture_nonlocked_.intelligibility_enabled !=
@@ -740,6 +781,8 @@ void AudioProcessingImpl::SetExtraOptions(const webrtc::Config& config) {
     InitializeIntelligibility();
   }
 #endif
+
+  std::cout << "AudioProcessingImpl::SetExtraOptions 8" << std::endl;
 
 #ifdef WEBRTC_ANDROID_PLATFORM_BUILD
   if (capture_nonlocked_.beamformer_enabled !=
@@ -752,6 +795,8 @@ void AudioProcessingImpl::SetExtraOptions(const webrtc::Config& config) {
     InitializeBeamformer();
   }
 #endif  // WEBRTC_ANDROID_PLATFORM_BUILD
+
+  std::cout << "AudioProcessingImpl::SetExtraOptions 9" << std::endl;
 }
 
 int AudioProcessingImpl::proc_sample_rate_hz() const {

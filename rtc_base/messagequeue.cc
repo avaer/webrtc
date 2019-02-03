@@ -17,6 +17,8 @@
 #include "rtc_base/thread.h"
 #include "rtc_base/trace_event.h"
 
+#include <iostream>
+
 namespace rtc {
 namespace {
 
@@ -233,12 +235,17 @@ SocketServer* MessageQueue::socketserver() {
 }
 
 void MessageQueue::WakeUpSocketServer() {
+  std::cout << "MessageQueue::WakeUpSocketServer 1" << std::endl;
   ss_->WakeUp();
+  std::cout << "MessageQueue::WakeUpSocketServer 2" << std::endl;
 }
 
 void MessageQueue::Quit() {
+  std::cout << "MessageQueue::Quit 1" << std::endl;
   AtomicOps::ReleaseStore(&stop_, 1);
+  std::cout << "MessageQueue::Quit 2" << std::endl;
   WakeUpSocketServer();
+  std::cout << "MessageQueue::Quit 3" << std::endl;
 }
 
 bool MessageQueue::IsQuitting() {
@@ -351,8 +358,12 @@ bool MessageQueue::Get(Message *pmsg, int cmsWait, bool process_io) {
 
     {
       // Wait and multiplex in the meantime
-      if (!ss_->Wait(static_cast<int>(cmsNext), process_io))
+      std::cout << "MessageQueue wait 1" << std::endl;
+      if (!ss_->Wait(static_cast<int>(cmsNext), process_io)) {
+        std::cout << "MessageQueue wait 2" << std::endl;
         return false;
+      }
+      std::cout << "MessageQueue wait 3" << std::endl;
     }
 
     // If the specified timeout expired, return
@@ -375,8 +386,11 @@ void MessageQueue::Post(const Location& posted_from,
                         uint32_t id,
                         MessageData* pdata,
                         bool time_sensitive) {
+  std::cout << "MessageQueue::Post 1 " << IsQuitting() << std::endl;
   if (IsQuitting())
     return;
+
+  std::cout << "MessageQueue::Post 2" << std::endl;
 
   // Keep thread safe
   // Add the message to the end of the queue
@@ -384,6 +398,7 @@ void MessageQueue::Post(const Location& posted_from,
 
   {
     CritScope cs(&crit_);
+    std::cout << "MessageQueue::Post 3" << std::endl;
     Message msg;
     msg.posted_from = posted_from;
     msg.phandler = phandler;
@@ -393,8 +408,11 @@ void MessageQueue::Post(const Location& posted_from,
       msg.ts_sensitive = TimeMillis() + kMaxMsgLatency;
     }
     msgq_.push_back(msg);
+    std::cout << "MessageQueue::Post 4" << std::endl;
   }
+  std::cout << "MessageQueue::Post 5" << std::endl;
   WakeUpSocketServer();
+  std::cout << "MessageQueue::Post 6" << std::endl;
 }
 
 void MessageQueue::PostDelayed(const Location& posted_from,

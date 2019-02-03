@@ -47,6 +47,7 @@ ChannelManager::~ChannelManager() {
 }
 
 bool ChannelManager::SetVideoRtxEnabled(bool enable) {
+  std::cout << "ChannelManager::SetVideoRtxEnabled 1 " << initialized_ << std::endl;
   // To be safe, this call is only allowed before initialization. Apps like
   // Flute only have a singleton ChannelManager and we don't want this flag to
   // be toggled between calls or when there's concurrent calls. We expect apps
@@ -116,25 +117,40 @@ void ChannelManager::GetSupportedDataCodecs(
 }
 
 bool ChannelManager::Init() {
+  std::cout << "ChannelManager::Init 1 " << initialized_ << " " << (bool)network_thread_ << " " << (bool)worker_thread_ << std::endl;
   RTC_DCHECK(!initialized_);
   if (initialized_) {
     return false;
   }
+  std::cout << "ChannelManager::Init 2" << std::endl;
   RTC_DCHECK(network_thread_);
   RTC_DCHECK(worker_thread_);
+  std::cout << "ChannelManager::Init 3 " << network_thread_->IsCurrent() << std::endl;
   if (!network_thread_->IsCurrent()) {
+    std::cout << "ChannelManager::Init 3.1" << std::endl;
     // Do not allow invoking calls to other threads on the network thread.
     network_thread_->Invoke<void>(
-        RTC_FROM_HERE, [&] { network_thread_->SetAllowBlockingCalls(false); });
+        RTC_FROM_HERE, [&] {
+          std::cout << "ChannelManager::Init 3.2" << std::endl;
+          network_thread_->SetAllowBlockingCalls(false);
+          std::cout << "ChannelManager::Init 3.3" << std::endl;
+        });
+    std::cout << "ChannelManager::Init 3.4" << std::endl;
   }
 
+  std::cout << "ChannelManager::Init 4 " << (bool)media_engine_ << std::endl;
+
   if (media_engine_) {
+    std::cout << "ChannelManager::Init 5" << std::endl;
     initialized_ = worker_thread_->Invoke<bool>(
         RTC_FROM_HERE, [&] { return media_engine_->Init(); });
+    std::cout << "ChannelManager::Init 6" << std::endl;
     RTC_DCHECK(initialized_);
+    std::cout << "ChannelManager::Init 7" << std::endl;
   } else {
     initialized_ = true;
   }
+  std::cout << "ChannelManager::Init 8" << std::endl;
   return initialized_;
 }
 

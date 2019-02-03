@@ -10,6 +10,8 @@
 
 #include "api/proxy.h"
 
+#include <iostream>
+
 namespace webrtc {
 namespace internal {
 
@@ -20,13 +22,21 @@ SynchronousMethodCall::~SynchronousMethodCall() = default;
 
 void SynchronousMethodCall::Invoke(const rtc::Location& posted_from,
                                    rtc::Thread* t) {
+  std::cout << "SynchronousMethodCall::Invoke 1 " << t->IsCurrent() << std::endl;
   if (t->IsCurrent()) {
+    std::cout << "SynchronousMethodCall::Invoke 2" << std::endl;
     proxy_->OnMessage(nullptr);
+    std::cout << "SynchronousMethodCall::Invoke 3" << std::endl;
   } else {
+    std::cout << "SynchronousMethodCall::Invoke 4" << std::endl;
     e_.reset(new rtc::Event(false, false));
+    std::cout << "SynchronousMethodCall::Invoke 5" << std::endl;
     t->Post(posted_from, this, 0);
+    std::cout << "SynchronousMethodCall::Invoke 6" << std::endl;
     e_->Wait(rtc::Event::kForever);
+    std::cout << "SynchronousMethodCall::Invoke 7" << std::endl;
   }
+  std::cout << "SynchronousMethodCall::Invoke 8" << std::endl;
 }
 
 void SynchronousMethodCall::OnMessage(rtc::Message*) {

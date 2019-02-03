@@ -25,6 +25,8 @@
 #include "media/engine/nullwebrtcvideoengine.h"
 #endif
 
+#include <iostream>
+
 namespace cricket {
 
 #if defined(USE_BUILTIN_SW_CODECS)
@@ -67,10 +69,13 @@ MediaEngineInterface* WebRtcMediaEngineFactory::Create(
         audio_decoder_factory,
     WebRtcVideoEncoderFactory* video_encoder_factory,
     WebRtcVideoDecoderFactory* video_decoder_factory) {
+  std::cout << "WebRtcMediaEngineFactory::Create 1 1" << std::endl;
+  webrtc::AudioProcessingBuilder a;
+  auto c = a.Create();
   return CreateWebRtcMediaEngine(adm, audio_encoder_factory,
                                  audio_decoder_factory, video_encoder_factory,
                                  video_decoder_factory, nullptr,
-                                 webrtc::AudioProcessingBuilder().Create());
+                                 c);
 }
 
 MediaEngineInterface* WebRtcMediaEngineFactory::Create(
@@ -83,6 +88,7 @@ MediaEngineInterface* WebRtcMediaEngineFactory::Create(
     WebRtcVideoDecoderFactory* video_decoder_factory,
     rtc::scoped_refptr<webrtc::AudioMixer> audio_mixer,
     rtc::scoped_refptr<webrtc::AudioProcessing> audio_processing) {
+  std::cout << "WebRtcMediaEngineFactory::Create 2 1" << std::endl;
   return CreateWebRtcMediaEngine(
       adm, audio_encoder_factory, audio_decoder_factory, video_encoder_factory,
       video_decoder_factory, audio_mixer, audio_processing);
@@ -97,16 +103,22 @@ std::unique_ptr<MediaEngineInterface> WebRtcMediaEngineFactory::Create(
     std::unique_ptr<webrtc::VideoDecoderFactory> video_decoder_factory,
     rtc::scoped_refptr<webrtc::AudioMixer> audio_mixer,
     rtc::scoped_refptr<webrtc::AudioProcessing> audio_processing) {
+  std::cout << "WebRtcMediaEngineFactory::Create 3 1" << std::endl;
 #ifdef HAVE_WEBRTC_VIDEO
+  std::cout << "WebRtcMediaEngineFactory::Create 3 2" << std::endl;
   typedef WebRtcVideoEngine VideoEngine;
   std::tuple<std::unique_ptr<webrtc::VideoEncoderFactory>,
              std::unique_ptr<webrtc::VideoDecoderFactory>>
       video_args(std::move(video_encoder_factory),
                  std::move(video_decoder_factory));
+  std::cout << "WebRtcMediaEngineFactory::Create 3 3" << std::endl;
 #else
+  std::cout << "WebRtcMediaEngineFactory::Create 3 4" << std::endl;
   typedef NullWebRtcVideoEngine VideoEngine;
   std::tuple<> video_args;
+  std::cout << "WebRtcMediaEngineFactory::Create 3 5" << std::endl;
 #endif
+  std::cout << "WebRtcMediaEngineFactory::Create 3 6" << std::endl;
   return std::unique_ptr<MediaEngineInterface>(
       new CompositeMediaEngine<WebRtcVoiceEngine, VideoEngine>(
           std::forward_as_tuple(adm, audio_encoder_factory,

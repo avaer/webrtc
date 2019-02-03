@@ -107,6 +107,7 @@ namespace rtc {
 
 std::unique_ptr<SocketServer> SocketServer::CreateDefault() {
 #if defined(__native_client__)
+#error lol
   return std::unique_ptr<SocketServer>(new rtc::NullSocketServer);
 #else
   return std::unique_ptr<SocketServer>(new rtc::PhysicalSocketServer);
@@ -903,39 +904,51 @@ int SocketDispatcher::Close() {
 class EventDispatcher : public Dispatcher {
  public:
   EventDispatcher(PhysicalSocketServer* ss) : ss_(ss), fSignaled_(false) {
+    std::cout << "EventDispatcher 1" << std::endl;
     if (pipe(afd_) < 0)
       RTC_LOG(LERROR) << "pipe failed";
     ss_->Add(this);
+    std::cout << "EventDispatcher 2" << std::endl;
   }
 
   ~EventDispatcher() override {
+    std::cout << "~EventDispatcher 1" << std::endl;
     ss_->Remove(this);
     close(afd_[0]);
     close(afd_[1]);
+    std::cout << "~EventDispatcher 2" << std::endl;
   }
 
   virtual void Signal() {
+    std::cout << "EventDispatcher::Signal 1" << std::endl;
     CritScope cs(&crit_);
+    std::cout << "EventDispatcher::Signal 2 " << fSignaled_ << std::endl;
     if (!fSignaled_) {
+      std::cout << "EventDispatcher::Signal 3" << std::endl;
       const uint8_t b[1] = {0};
       const ssize_t res = write(afd_[1], b, sizeof(b));
       RTC_DCHECK_EQ(1, res);
       fSignaled_ = true;
+      std::cout << "EventDispatcher::Signal 4" << std::endl;
     }
   }
 
   uint32_t GetRequestedEvents() override { return DE_READ; }
 
   void OnPreEvent(uint32_t ff) override {
+    std::cout << "EventDispatcher::OnPreEvent 1 " << fSignaled_ << std::endl;
     // It is not possible to perfectly emulate an auto-resetting event with
     // pipes.  This simulates it by resetting before the event is handled.
 
     CritScope cs(&crit_);
+    std::cout << "EventDispatcher::OnPreEvent 2" << std::endl;
     if (fSignaled_) {
+      std::cout << "EventDispatcher::OnPreEvent 3" << std::endl;
       uint8_t b[4];  // Allow for reading more than 1 byte, but expect 1.
       const ssize_t res = read(afd_[0], b, sizeof(b));
       RTC_DCHECK_EQ(1, res);
       fSignaled_ = false;
+      std::cout << "EventDispatcher::OnPreEvent 4" << std::endl;
     }
   }
 
@@ -1201,8 +1214,11 @@ class Signaler : public EventDispatcher {
   ~Signaler() override { }
 
   void OnEvent(uint32_t ff, int err) override {
-    if (pf_)
+    std::cout << "Signaler::OnEvent 1" << (bool)pf_ << std::endl;
+    if (pf_) {
+      std::cout << "Signaler::OnEvent 2" << *pf_ << std::endl;
       *pf_ = false;
+    }
   }
 
  private:
@@ -1245,7 +1261,9 @@ PhysicalSocketServer::~PhysicalSocketServer() {
 }
 
 void PhysicalSocketServer::WakeUp() {
+  std::cout << "PhysicalSocketServer::WakeUp 1" << std::endl;
   signal_wakeup_->Signal();
+  std::cout << "PhysicalSocketServer::WakeUp 2" << std::endl;
 }
 
 Socket* PhysicalSocketServer::CreateSocket(int type) {
@@ -1368,16 +1386,20 @@ void PhysicalSocketServer::AddRemovePendingDispatchers() {
 #if defined(WEBRTC_POSIX)
 
 bool PhysicalSocketServer::Wait(int cmsWait, bool process_io) {
+  std::cout << "PhysicalSocketServer::Wait 1 " << (bool)process_io << std::endl;
 #if defined(WEBRTC_USE_EPOLL)
   // We don't keep a dedicated "epoll" descriptor containing only the non-IO
   // (i.e. signaling) dispatcher, so "poll" will be used instead of the default
   // "select" to support sockets larger than FD_SETSIZE.
   if (!process_io) {
+    std::cout << "PhysicalSocketServer::Wait 2" << std::endl;
     return WaitPoll(cmsWait, signal_wakeup_);
   } else if (epoll_fd_ != INVALID_SOCKET) {
+  std::cout << "PhysicalSocketServer::Wait 3" << std::endl;
     return WaitEpoll(cmsWait);
   }
 #endif
+  std::cout << "PhysicalSocketServer::Wait 4" << std::endl;
   return WaitSelect(cmsWait, process_io);
 }
 
@@ -1385,6 +1407,7 @@ static void ProcessEvents(Dispatcher* dispatcher,
                           bool readable,
                           bool writable,
                           bool check_error) {
+  std::cout << "ProcessEvents 1" << std::endl;
   int errcode = 0;
   // TODO(pthatcher): Should we set errcode if getsockopt fails?
   if (check_error) {
@@ -1392,6 +1415,8 @@ static void ProcessEvents(Dispatcher* dispatcher,
     ::getsockopt(dispatcher->GetDescriptor(), SOL_SOCKET, SO_ERROR, &errcode,
                  &len);
   }
+
+  std::cout << "ProcessEvents 2 " << readable << " " << writable << std::endl;
 
   uint32_t ff = 0;
 
@@ -1423,15 +1448,23 @@ static void ProcessEvents(Dispatcher* dispatcher,
     }
   }
 
+  std::cout << "ProcessEvents 3 " << ff << std::endl;
+
   // Tell the descriptor about the event.
   if (ff != 0) {
+    std::cout << "ProcessEvents 4" << std::endl;
     dispatcher->OnPreEvent(ff);
+    std::cout << "ProcessEvents 5" << std::endl;
     dispatcher->OnEvent(ff, errcode);
+    std::cout << "ProcessEvents 6" << std::endl;
   }
+  std::cout << "ProcessEvents 7" << std::endl;
 }
 
 bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
   // Calculate timing information
+
+std::cout << "PhysicalSocketServer::WaitSelect 1" << std::endl;
 
   struct timeval* ptvWait = nullptr;
   struct timeval tvWait;
@@ -1452,6 +1485,8 @@ bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
     }
   }
 
+  std::cout << "PhysicalSocketServer::WaitSelect 2" << std::endl;
+
   // Zero all fd_sets. Don't need to do this inside the loop since
   // select() zeros the descriptors not signaled
 
@@ -1467,33 +1502,43 @@ bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
   __msan_unpoison(&fdsWrite, sizeof(fdsWrite));
 #endif
 
+  std::cout << "PhysicalSocketServer::WaitSelect 3" << std::endl;
+
   fWait_ = true;
 
   while (fWait_) {
+    std::cout << "PhysicalSocketServer::WaitSelect 4" << std::endl;
     int fdmax = -1;
     {
       CritScope cr(&crit_);
       // TODO(jbauch): Support re-entrant waiting.
       RTC_DCHECK(!processing_dispatchers_);
       for (Dispatcher* pdispatcher : dispatchers_) {
+        std::cout << "PhysicalSocketServer::WaitSelect 5" << std::endl;
+
         // Query dispatchers for read and write wait state
         RTC_DCHECK(pdispatcher);
         if (!process_io && (pdispatcher != signal_wakeup_))
           continue;
+        std::cout << "PhysicalSocketServer::WaitSelect 6" << std::endl;
         int fd = pdispatcher->GetDescriptor();
         // "select"ing a file descriptor that is equal to or larger than
         // FD_SETSIZE will result in undefined behavior.
         RTC_DCHECK_LT(fd, FD_SETSIZE);
         if (fd > fdmax)
           fdmax = fd;
+        std::cout << "PhysicalSocketServer::WaitSelect 7" << std::endl;
 
         uint32_t ff = pdispatcher->GetRequestedEvents();
         if (ff & (DE_READ | DE_ACCEPT))
           FD_SET(fd, &fdsRead);
         if (ff & (DE_WRITE | DE_CONNECT))
           FD_SET(fd, &fdsWrite);
+        std::cout << "PhysicalSocketServer::WaitSelect 8" << std::endl;
       }
     }
+
+    std::cout << "PhysicalSocketServer::WaitSelect 9" << std::endl;
 
     // Wait then call handlers as appropriate
     // < 0 means error
@@ -1501,8 +1546,12 @@ bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
     // > 0 means count of descriptors ready
     int n = select(fdmax + 1, &fdsRead, &fdsWrite, nullptr, ptvWait);
 
+    std::cout << "PhysicalSocketServer::WaitSelect 10 " << n << std::endl;
+
     // If error, return error.
     if (n < 0) {
+      std::cout << "PhysicalSocketServer::WaitSelect 11" << std::endl;
+
       if (errno != EINTR) {
         RTC_LOG_E(LS_ERROR, EN, errno) << "select";
         return false;
@@ -1512,13 +1561,16 @@ bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
       // PosixSignalDeliveryDispatcher will be in the signaled state in the next
       // iteration.
     } else if (n == 0) {
+      std::cout << "PhysicalSocketServer::WaitSelect 12" << std::endl;
       // If timeout, return success
       return true;
     } else {
+      std::cout << "PhysicalSocketServer::WaitSelect 13" << std::endl;
       // We have signaled descriptors
       CritScope cr(&crit_);
       processing_dispatchers_ = true;
       for (Dispatcher* pdispatcher : dispatchers_) {
+        std::cout << "PhysicalSocketServer::WaitSelect 14" << std::endl;
         int fd = pdispatcher->GetDescriptor();
 
         bool readable = FD_ISSET(fd, &fdsRead);
@@ -1534,11 +1586,13 @@ bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
         // The error code can be signaled through reads or writes.
         ProcessEvents(pdispatcher, readable, writable, readable || writable);
       }
+      std::cout << "PhysicalSocketServer::WaitSelect 15" << std::endl;
 
       processing_dispatchers_ = false;
       // Process deferred dispatchers that have been added/removed while the
       // events were handled above.
       AddRemovePendingDispatchers();
+      std::cout << "PhysicalSocketServer::WaitSelect 16" << std::endl;
     }
 
     // Recalc the time remaining to wait. Doing it here means it doesn't get
@@ -1560,7 +1614,10 @@ bool PhysicalSocketServer::WaitSelect(int cmsWait, bool process_io) {
         }
       }
     }
+    std::cout << "PhysicalSocketServer::WaitSelect 17" << std::endl;
   }
+
+  std::cout << "PhysicalSocketServer::WaitSelect 18" << std::endl;
 
   return true;
 }
@@ -1631,6 +1688,8 @@ void PhysicalSocketServer::UpdateEpoll(Dispatcher* pdispatcher) {
 }
 
 bool PhysicalSocketServer::WaitEpoll(int cmsWait) {
+  std::cout << "PhysicalSocketServer::WaitEpoll 1" << std::endl;
+
   RTC_DCHECK(epoll_fd_ != INVALID_SOCKET);
   int64_t tvWait = -1;
   int64_t tvStop = -1;
@@ -1646,7 +1705,11 @@ bool PhysicalSocketServer::WaitEpoll(int cmsWait) {
 
   fWait_ = true;
 
+  std::cout << "PhysicalSocketServer::WaitEpoll 2" << std::endl;
+
   while (fWait_) {
+    std::cout << "PhysicalSocketServer::WaitEpoll 3" << std::endl;
+    
     // Wait then call handlers as appropriate
     // < 0 means error
     // 0 means timeout
@@ -1654,7 +1717,9 @@ bool PhysicalSocketServer::WaitEpoll(int cmsWait) {
     int n = epoll_wait(epoll_fd_, &epoll_events_[0],
                        static_cast<int>(epoll_events_.size()),
                        static_cast<int>(tvWait));
+    std::cout << "PhysicalSocketServer::WaitEpoll 4 " << n << std::endl;
     if (n < 0) {
+      std::cout << "PhysicalSocketServer::WaitEpoll 5" << std::endl;
       if (errno != EINTR) {
         RTC_LOG_E(LS_ERROR, EN, errno) << "epoll";
         return false;
@@ -1664,9 +1729,11 @@ bool PhysicalSocketServer::WaitEpoll(int cmsWait) {
       // PosixSignalDeliveryDispatcher will be in the signaled state in the next
       // iteration.
     } else if (n == 0) {
+      std::cout << "PhysicalSocketServer::WaitEpoll 6" << std::endl;
       // If timeout, return success
       return true;
     } else {
+      std::cout << "PhysicalSocketServer::WaitEpoll 7" << std::endl;
       // We have signaled descriptors
       CritScope cr(&crit_);
       for (int i = 0; i < n; ++i) {
@@ -1685,12 +1752,16 @@ bool PhysicalSocketServer::WaitEpoll(int cmsWait) {
       }
     }
 
+    std::cout << "PhysicalSocketServer::WaitEpoll 8" << std::endl;
+
     if (static_cast<size_t>(n) == epoll_events_.size() &&
         epoll_events_.size() < kMaxEpollEvents) {
       // We used the complete space to receive events, increase size for future
       // iterations.
       epoll_events_.resize(std::max(epoll_events_.size() * 2, kMaxEpollEvents));
     }
+
+    std::cout << "PhysicalSocketServer::WaitEpoll 9" << std::endl;
 
     if (cmsWait != kForever) {
       tvWait = TimeDiff(tvStop, TimeMillis());
@@ -1699,12 +1770,17 @@ bool PhysicalSocketServer::WaitEpoll(int cmsWait) {
         return true;
       }
     }
+    std::cout << "PhysicalSocketServer::WaitEpoll 10" << std::endl;
   }
+
+  std::cout << "PhysicalSocketServer::WaitEpoll 11" << std::endl;
 
   return true;
 }
 
 bool PhysicalSocketServer::WaitPoll(int cmsWait, Dispatcher* dispatcher) {
+  std::cout << "PhysicalSocketServer::WaitPoll 1" << std::endl;
+
   RTC_DCHECK(dispatcher);
   int64_t tvWait = -1;
   int64_t tvStop = -1;
@@ -1715,11 +1791,17 @@ bool PhysicalSocketServer::WaitPoll(int cmsWait, Dispatcher* dispatcher) {
 
   fWait_ = true;
 
+  std::cout << "PhysicalSocketServer::WaitPoll 2" << std::endl;
+
   struct pollfd fds = {0};
   int fd = dispatcher->GetDescriptor();
   fds.fd = fd;
 
+  std::cout << "PhysicalSocketServer::WaitPoll 3 " << std::endl;
+
   while (fWait_) {
+    std::cout << "PhysicalSocketServer::WaitPoll 4" << std::endl;
+
     uint32_t ff = dispatcher->GetRequestedEvents();
     fds.events = 0;
     if (ff & (DE_READ | DE_ACCEPT)) {
@@ -1730,12 +1812,15 @@ bool PhysicalSocketServer::WaitPoll(int cmsWait, Dispatcher* dispatcher) {
     }
     fds.revents = 0;
 
+    std::cout << "PhysicalSocketServer::WaitPoll 5 " << fds.fd << " " << fds.events << " " << tvWait << std::endl;
+
     // Wait then call handlers as appropriate
     // < 0 means error
     // 0 means timeout
     // > 0 means count of descriptors ready
     int n = poll(&fds, 1, static_cast<int>(tvWait));
     if (n < 0) {
+      std::cout << "PhysicalSocketServer::WaitPoll 6" << n << std::endl;
       if (errno != EINTR) {
         RTC_LOG_E(LS_ERROR, EN, errno) << "poll";
         return false;
@@ -1745,9 +1830,11 @@ bool PhysicalSocketServer::WaitPoll(int cmsWait, Dispatcher* dispatcher) {
       // PosixSignalDeliveryDispatcher will be in the signaled state in the next
       // iteration.
     } else if (n == 0) {
+      std::cout << "PhysicalSocketServer::WaitPoll 7" << std::endl;
       // If timeout, return success
       return true;
     } else {
+      std::cout << "PhysicalSocketServer::WaitPoll 8" << std::endl;
       // We have signaled descriptors (should only be the passed dispatcher).
       RTC_DCHECK_EQ(n, 1);
       RTC_DCHECK_EQ(fds.fd, fd);
@@ -1759,6 +1846,8 @@ bool PhysicalSocketServer::WaitPoll(int cmsWait, Dispatcher* dispatcher) {
       ProcessEvents(dispatcher, readable, writable, check_error);
     }
 
+    std::cout << "PhysicalSocketServer::WaitPoll 9" << std::endl;
+
     if (cmsWait != kForever) {
       tvWait = TimeDiff(tvStop, TimeMillis());
       if (tvWait < 0) {
@@ -1766,7 +1855,10 @@ bool PhysicalSocketServer::WaitPoll(int cmsWait, Dispatcher* dispatcher) {
         return true;
       }
     }
+    std::cout << "PhysicalSocketServer::WaitPoll 10" << std::endl;
   }
+
+  std::cout << "PhysicalSocketServer::WaitPoll 11" << std::endl;
 
   return true;
 }

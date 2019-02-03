@@ -26,6 +26,8 @@
 #include "rtc_base/timeutils.h"
 #include "rtc_base/trace_event.h"
 
+#include <iostream>
+
 namespace rtc {
 
 ThreadManager* ThreadManager::Instance() {
@@ -146,8 +148,11 @@ Thread::Thread(std::unique_ptr<SocketServer> ss, bool do_init)
 }
 
 Thread::~Thread() {
+  std::cout << "~Thread 1 " << name_ << std::endl;
   Stop();
+  std::cout << "~Thread 2 " << name_ << std::endl;
   DoDestroy();
+  std::cout << "~Thread 3 " << name_ << std::endl;
 }
 
 bool Thread::IsCurrent() const {
@@ -193,6 +198,9 @@ bool Thread::SetName(const std::string& name, const void* obj) {
     sprintfn(buf, sizeof(buf), " 0x%p", obj);
     name_ += buf;
   }
+
+  std::cout << "Thread::SetName " << name_ << std::endl;
+
   return true;
 }
 
@@ -338,8 +346,11 @@ void Thread::Send(const Location& posted_from,
                   MessageHandler* phandler,
                   uint32_t id,
                   MessageData* pdata) {
+  std::cout << "Thread::Send 1 " << IsQuitting() << std::endl;
   if (IsQuitting())
     return;
+
+  std::cout << "Thread::Send 2 " << IsCurrent() << std::endl;
 
   // Sent messages are sent to the MessageHandler directly, in the context
   // of "thread", like Win32 SendMessage. If in the right context,
@@ -354,11 +365,17 @@ void Thread::Send(const Location& posted_from,
     return;
   }
 
+  std::cout << "Thread::Send 3" << std::endl;
+
   AssertBlockingIsAllowedOnCurrentThread();
+
+  std::cout << "Thread::Send 4" << std::endl;
 
   AutoThread thread;
   Thread *current_thread = Thread::Current();
   RTC_DCHECK(current_thread != nullptr);  // AutoThread ensures this
+
+  std::cout << "Thread::Send 5" << std::endl;
 
   bool ready = false;
   {
@@ -370,20 +387,31 @@ void Thread::Send(const Location& posted_from,
     sendlist_.push_back(smsg);
   }
 
+  std::cout << "Thread::Send 6" << std::endl;
+
   // Wait for a reply
   WakeUpSocketServer();
 
+  std::cout << "Thread::Send 7" << std::endl;
+
   bool waited = false;
   crit_.Enter();
+  std::cout << "Thread::Send 8 " << ready << std::endl;
   while (!ready) {
+    std::cout << "Thread::Send 9" << std::endl;
     crit_.Leave();
+    std::cout << "Thread::Send 10" << std::endl;
     // We need to limit "ReceiveSends" to |this| thread to avoid an arbitrary
     // thread invoking calls on the current thread.
     current_thread->ReceiveSendsFromThread(this);
+    std::cout << "Thread::Send 11" << std::endl;
     current_thread->socketserver()->Wait(kForever, false);
+    std::cout << "Thread::Send 12" << std::endl;
     waited = true;
     crit_.Enter();
+    std::cout << "Thread::Send 13" << std::endl;
   }
+    std::cout << "Thread::Send 14" << std::endl;
   crit_.Leave();
 
   // Our Wait loop above may have consumed some WakeUp events for this
@@ -397,9 +425,13 @@ void Thread::Send(const Location& posted_from,
   // this loop, we need to issue another WakeUp, or else the Posted message
   // won't be processed in a timely manner.
 
+  std::cout << "Thread::Send 15" << std::endl;
+
   if (waited) {
     current_thread->socketserver()->WakeUp();
   }
+
+  std::cout << "Thread::Send 16" << std::endl;
 }
 
 void Thread::ReceiveSends() {
@@ -441,10 +473,13 @@ bool Thread::PopSendMessageFromThread(const Thread* source, _SendMessage* msg) {
 
 void Thread::InvokeInternal(const Location& posted_from,
                             MessageHandler* handler) {
+  std::cout << "Thread::InvokeInternal 1" << std::endl;
   TRACE_EVENT2("webrtc", "Thread::Invoke", "src_file_and_line",
                posted_from.file_and_line(), "src_func",
                posted_from.function_name());
+  std::cout << "Thread::InvokeInternal 2" << std::endl;
   Send(posted_from, handler);
+  std::cout << "Thread::InvokeInternal 3" << std::endl;
 }
 
 void Thread::Clear(MessageHandler* phandler,
@@ -480,6 +515,7 @@ void Thread::Clear(MessageHandler* phandler,
 // Note that these methods have a separate implementation for mac and ios
 // defined in webrtc/rtc_base/thread_darwin.mm.
 bool Thread::ProcessMessages(int cmsLoop) {
+  std::cout << "Thread::ProcessMessages " << name_ << std::endl;
   // Using ProcessMessages with a custom clock for testing and a time greater
   // than 0 doesn't work, since it's not guaranteed to advance the custom
   // clock's time, and may get stuck in an infinite loop.
@@ -490,15 +526,23 @@ bool Thread::ProcessMessages(int cmsLoop) {
 
   while (true) {
     Message msg;
-    if (!Get(&msg, cmsNext))
+    if (Get(&msg, cmsNext)) {
+      std::cout << "Thread::ProcessMessages got " << name_ << std::endl;
+      // nothing
+    } else {
+      std::cout << "Thread::ProcessMessages failed to get " << name_ << std::endl;
       return !IsQuitting();
+    }
     Dispatch(&msg);
 
     if (cmsLoop != kForever) {
       cmsNext = static_cast<int>(TimeUntil(msEnd));
-      if (cmsNext < 0)
+      if (cmsNext < 0) {
+        std::cout << "Thread::ProcessMessages quit " << name_ << std::endl;
         return true;
+      }
     }
+        std::cout << "Thread::ProcessMessages looparound " << name_ << std::endl;
   }
 }
 #endif

@@ -20,6 +20,8 @@
 #include "rtc_base/scoped_ref_ptr.h"
 #include "rtc_base/thread.h"
 
+#include <iostream>
+
 namespace webrtc {
 
 #if defined(USE_BUILTIN_SW_CODECS)
@@ -48,9 +50,18 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
     rtc::scoped_refptr<AudioMixer> audio_mixer,
     rtc::scoped_refptr<AudioProcessing> audio_processing) {
   rtc::scoped_refptr<AudioProcessing> audio_processing_use = audio_processing;
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1 1" << (bool)audio_processing_use << std::endl;
+
   if (!audio_processing_use) {
-    audio_processing_use = AudioProcessingBuilder().Create();
+    std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1.1" << std::endl;
+    AudioProcessingBuilder a;
+    std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1.2" << std::endl;
+    audio_processing_use = a.Create();
+    std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1.3" << std::endl;
   }
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1 2" << std::endl;
 
   std::unique_ptr<cricket::MediaEngineInterface> media_engine(
       cricket::WebRtcMediaEngineFactory::Create(
@@ -58,10 +69,16 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
           video_encoder_factory, video_decoder_factory, audio_mixer,
           audio_processing_use));
 
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1 3" << std::endl;
+
   std::unique_ptr<CallFactoryInterface> call_factory = CreateCallFactory();
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1 4" << std::endl;
 
   std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory =
       CreateRtcEventLogFactory();
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 1 5" << std::endl;
 
   return CreateModularPeerConnectionFactory(
       network_thread, worker_thread, signaling_thread, std::move(media_engine),
@@ -82,9 +99,14 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
     rtc::scoped_refptr<AudioProcessing> audio_processing,
     std::unique_ptr<FecControllerFactoryInterface> fec_controller_factory) {
   rtc::scoped_refptr<AudioProcessing> audio_processing_use = audio_processing;
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 2 1" << (bool)audio_processing_use << std::endl;
+
   if (!audio_processing_use) {
     audio_processing_use = AudioProcessingBuilder().Create();
   }
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 2 2" << std::endl;
 
   std::unique_ptr<cricket::MediaEngineInterface> media_engine(
       cricket::WebRtcMediaEngineFactory::Create(
@@ -92,10 +114,16 @@ rtc::scoped_refptr<PeerConnectionFactoryInterface> CreatePeerConnectionFactory(
           video_encoder_factory, video_decoder_factory, audio_mixer,
           audio_processing_use));
 
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 2 3" << std::endl;
+
   std::unique_ptr<CallFactoryInterface> call_factory = CreateCallFactory();
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 2 4" << std::endl;
 
   std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory =
       CreateRtcEventLogFactory();
+
+  std::cout << "CreatePeerConnectionFactory::CreatePeerConnectionFactory 2 5" << std::endl;
 
   return CreateModularPeerConnectionFactory(
       network_thread, worker_thread, signaling_thread, std::move(media_engine),

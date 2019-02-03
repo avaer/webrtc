@@ -43,6 +43,8 @@
 #include "pc/videocapturertracksource.h"
 #include "pc/videotrack.h"
 
+#include <iostream>
+
 namespace webrtc {
 
 rtc::scoped_refptr<PeerConnectionFactoryInterface>
@@ -67,21 +69,32 @@ CreateModularPeerConnectionFactory(
     std::unique_ptr<CallFactoryInterface> call_factory,
     std::unique_ptr<RtcEventLogFactoryInterface> event_log_factory,
     std::unique_ptr<FecControllerFactoryInterface> fec_controller_factory) {
+  std::cout << "CreateModularPeerConnectionFactory 1" << std::endl;
   rtc::scoped_refptr<PeerConnectionFactory> pc_factory(
       new rtc::RefCountedObject<PeerConnectionFactory>(
           network_thread, worker_thread, signaling_thread,
           std::move(media_engine), std::move(call_factory),
           std::move(event_log_factory), std::move(fec_controller_factory)));
 
+  std::cout << "CreateModularPeerConnectionFactory 2" << std::endl;
+
   // Call Initialize synchronously but make sure it is executed on
   // |signaling_thread|.
   MethodCall0<PeerConnectionFactory, bool> call(
       pc_factory.get(), &PeerConnectionFactory::Initialize);
+
+  std::cout << "CreateModularPeerConnectionFactory 3" << std::endl;
+
   bool result = call.Marshal(RTC_FROM_HERE, pc_factory->signaling_thread());
+
+  std::cout << "CreateModularPeerConnectionFactory 4" << std::endl;
 
   if (!result) {
     return nullptr;
   }
+
+  std::cout << "CreateModularPeerConnectionFactory 5" << std::endl;
+
   return PeerConnectionFactoryProxy::Create(pc_factory->signaling_thread(),
                                             pc_factory);
 }
@@ -117,11 +130,14 @@ PeerConnectionFactory::PeerConnectionFactory(
       call_factory_(std::move(call_factory)),
       event_log_factory_(std::move(event_log_factory)),
       fec_controller_factory_(std::move(fec_controller_factory)) {
+  std::cout << "PeerConnectionFactory::PeerConnectionFactory 1 " << (void *)network_thread_ << " " << (void *)worker_thread_ << " " << (void *)signaling_thread_ << std::endl;
   if (!network_thread_) {
+    std::cout << "PeerConnectionFactory::PeerConnectionFactory 2" << std::endl;
     owned_network_thread_ = rtc::Thread::CreateWithSocketServer();
     owned_network_thread_->SetName("pc_network_thread", nullptr);
     owned_network_thread_->Start();
     network_thread_ = owned_network_thread_.get();
+    std::cout << "PeerConnectionFactory::PeerConnectionFactory 3" << std::endl;
   }
 
   if (!worker_thread_) {
@@ -147,26 +163,39 @@ PeerConnectionFactory::PeerConnectionFactory(
 }
 
 PeerConnectionFactory::~PeerConnectionFactory() {
+  std::cout << "PeerConnectionFactory::~PeerConnectionFactory 1" << std::endl;
   RTC_DCHECK(signaling_thread_->IsCurrent());
   channel_manager_.reset(nullptr);
+
+  std::cout << "PeerConnectionFactory::~PeerConnectionFactory 2" << std::endl;
 
   // Make sure |worker_thread_| and |signaling_thread_| outlive
   // |default_socket_factory_| and |default_network_manager_|.
   default_socket_factory_ = nullptr;
   default_network_manager_ = nullptr;
 
+  std::cout << "PeerConnectionFactory::~PeerConnectionFactory 3" << std::endl;
+
   if (wraps_current_thread_)
     rtc::ThreadManager::Instance()->UnwrapCurrentThread();
+
+  std::cout << "PeerConnectionFactory::~PeerConnectionFactory 4" << std::endl;
 }
 
 bool PeerConnectionFactory::Initialize() {
+  std::cout << "PeerConnectionFactory::Initialize 1 " << signaling_thread_->IsCurrent() << std::endl;
+
   RTC_DCHECK(signaling_thread_->IsCurrent());
   rtc::InitRandom(rtc::Time32());
+
+  std::cout << "PeerConnectionFactory::Initialize 2" << std::endl;
 
   default_network_manager_.reset(new rtc::BasicNetworkManager());
   if (!default_network_manager_) {
     return false;
   }
+
+  std::cout << "PeerConnectionFactory::Initialize 3" << std::endl;
 
   default_socket_factory_.reset(
       new rtc::BasicPacketSocketFactory(network_thread_));
@@ -174,14 +203,20 @@ bool PeerConnectionFactory::Initialize() {
     return false;
   }
 
+  std::cout << "PeerConnectionFactory::Initialize 4" << std::endl;
+
   channel_manager_ = rtc::MakeUnique<cricket::ChannelManager>(
       std::move(media_engine_), rtc::MakeUnique<cricket::RtpDataEngine>(),
       worker_thread_, network_thread_);
+
+  std::cout << "PeerConnectionFactory::Initialize 5 " << (void *)channel_manager_.get() << std::endl;
 
   channel_manager_->SetVideoRtxEnabled(true);
   if (!channel_manager_->Init()) {
     return false;
   }
+
+  std::cout << "PeerConnectionFactory::Initialize 6" << std::endl;
 
   return true;
 }
@@ -293,6 +328,8 @@ PeerConnectionFactory::CreatePeerConnection(
   rtc::scoped_refptr<PeerConnection> pc(
       new rtc::RefCountedObject<PeerConnection>(this, std::move(event_log),
                                                 std::move(call)));
+
+  std::cout << "PeerConnectionFactory::CreatePeerConnection 1 " << (bool)configuration.ice_regather_interval_range << " " << (configuration.continual_gathering_policy == webrtc::PeerConnectionInterface::ContinualGatheringPolicy::GATHER_ONCE) << std::endl;
 
   if (!pc->Initialize(configuration, std::move(allocator),
                       std::move(cert_generator), observer)) {
