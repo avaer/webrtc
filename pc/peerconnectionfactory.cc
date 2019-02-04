@@ -332,6 +332,21 @@ void PeerConnectionFactory::StopAecDump() {
 rtc::scoped_refptr<PeerConnectionInterface>
 PeerConnectionFactory::CreatePeerConnection(
     const PeerConnectionInterface::RTCConfiguration& configuration,
+    const MediaConstraintsInterface* constraints,
+    std::unique_ptr<cricket::PortAllocator> allocator,
+    std::unique_ptr<rtc::RTCCertificateGeneratorInterface> cert_generator,
+    PeerConnectionObserver* observer) {
+  // Convert the legacy API into the new depnedency structure.
+  PeerConnectionDependencies dependencies(observer);
+  dependencies.allocator = std::move(allocator);
+  dependencies.cert_generator = std::move(cert_generator);
+  // Pass that into the new API.
+  return CreatePeerConnection(configuration, std::move(dependencies));
+}
+
+rtc::scoped_refptr<PeerConnectionInterface>
+PeerConnectionFactory::CreatePeerConnection(
+    const PeerConnectionInterface::RTCConfiguration& configuration,
     std::unique_ptr<cricket::PortAllocator> allocator,
     std::unique_ptr<rtc::RTCCertificateGeneratorInterface> cert_generator,
     PeerConnectionObserver* observer) {

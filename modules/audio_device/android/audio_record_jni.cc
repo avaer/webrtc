@@ -83,7 +83,7 @@ bool AudioRecordJni::JavaAudioRecord::EnableBuiltInNS(bool enable) {
 
 // AudioRecordJni implementation.
 AudioRecordJni::AudioRecordJni(AudioManager* audio_manager)
-    : j_environment_(JVM::GetInstance()->environment()),
+    : // j_environment_(JVM::GetInstance()->environment()),
       audio_manager_(audio_manager),
       audio_parameters_(audio_manager->GetRecordAudioParameters()),
       total_delay_in_milliseconds_(0),
@@ -93,7 +93,8 @@ AudioRecordJni::AudioRecordJni(AudioManager* audio_manager)
       initialized_(false),
       recording_(false),
       audio_device_buffer_(nullptr) {
-  RTC_LOG(INFO) << "ctor";
+  return;
+  /* RTC_LOG(INFO) << "ctor";
   RTC_DCHECK(audio_parameters_.is_valid());
   RTC_CHECK(j_environment_);
   JNINativeMethod native_methods[] = {
@@ -111,7 +112,7 @@ AudioRecordJni::AudioRecordJni(AudioManager* audio_manager)
                               "<init>", "(J)V", PointerTojlong(this))));
   // Detach from this thread since we want to use the checker to verify calls
   // from the Java based audio thread.
-  thread_checker_java_.DetachFromThread();
+  thread_checker_java_.DetachFromThread(); */
 }
 
 AudioRecordJni::~AudioRecordJni() {

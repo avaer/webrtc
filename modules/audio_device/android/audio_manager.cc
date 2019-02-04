@@ -59,7 +59,7 @@ bool AudioManager::JavaAudioManager::IsDeviceBlacklistedForOpenSLESUsage() {
 
 // AudioManager implementation
 AudioManager::AudioManager()
-    : j_environment_(JVM::GetInstance()->environment()),
+    : // j_environment_(JVM::GetInstance()->environment()),
       audio_layer_(AudioDeviceModule::kPlatformDefaultAudio),
       initialized_(false),
       hardware_aec_(false),
@@ -68,7 +68,8 @@ AudioManager::AudioManager()
       low_latency_playout_(false),
       low_latency_record_(false),
       delay_estimate_in_milliseconds_(0) {
-  RTC_LOG(INFO) << "ctor";
+  return;
+  /* RTC_LOG(INFO) << "ctor";
   RTC_CHECK(j_environment_);
   JNINativeMethod native_methods[] = {
       {"nativeCacheAudioParameters", "(IIIZZZZZZZIIJ)V",
@@ -79,7 +80,7 @@ AudioManager::AudioManager()
   j_audio_manager_.reset(
       new JavaAudioManager(j_native_registration_.get(),
                            j_native_registration_->NewObject(
-                               "<init>", "(J)V", PointerTojlong(this))));
+                               "<init>", "(J)V", PointerTojlong(this)))); */
 }
 
 AudioManager::~AudioManager() {
