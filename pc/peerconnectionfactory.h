@@ -44,6 +44,13 @@ class PeerConnectionFactory : public PeerConnectionFactoryInterface {
 
   rtc::scoped_refptr<PeerConnectionInterface> CreatePeerConnection(
       const PeerConnectionInterface::RTCConfiguration& configuration,
+      const MediaConstraintsInterface* constraints,
+      std::unique_ptr<cricket::PortAllocator> allocator,
+      std::unique_ptr<rtc::RTCCertificateGeneratorInterface> cert_generator,
+      PeerConnectionObserver* observer) override;
+
+  rtc::scoped_refptr<PeerConnectionInterface> CreatePeerConnection(
+      const PeerConnectionInterface::RTCConfiguration& configuration,
       std::unique_ptr<cricket::PortAllocator> allocator,
       std::unique_ptr<rtc::RTCCertificateGeneratorInterface> cert_generator,
       PeerConnectionObserver* observer) override;

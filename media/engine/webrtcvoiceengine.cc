@@ -209,9 +209,9 @@ WebRtcVoiceEngine::WebRtcVoiceEngine(
   worker_thread_checker_.DetachFromThread();
   signal_thread_checker_.DetachFromThread();
   RTC_LOG(LS_INFO) << "WebRtcVoiceEngine::WebRtcVoiceEngine";
-  RTC_DCHECK(decoder_factory);
-  RTC_DCHECK(encoder_factory);
-  RTC_DCHECK(audio_processing);
+  // RTC_DCHECK(decoder_factory);
+  // RTC_DCHECK(encoder_factory);
+  // RTC_DCHECK(audio_processing);
   // The rest of our initialization will happen in Init.
 }
 
@@ -230,7 +230,7 @@ WebRtcVoiceEngine::~WebRtcVoiceEngine() {
 }
 
 void WebRtcVoiceEngine::Init() {
-  RTC_DCHECK(worker_thread_checker_.CalledOnValidThread());
+  /* RTC_DCHECK(worker_thread_checker_.CalledOnValidThread());
   RTC_LOG(LS_INFO) << "WebRtcVoiceEngine::Init";
 
   // TaskQueue expects to be created/destroyed on the same thread.
@@ -300,7 +300,7 @@ void WebRtcVoiceEngine::Init() {
     options.residual_echo_detector = true;
     bool error = ApplyOptions(options);
     RTC_DCHECK(error);
-  }
+  } */
 
   initialized_ = true;
 }

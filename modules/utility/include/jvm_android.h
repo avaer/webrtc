@@ -32,7 +32,7 @@ class AttachCurrentThreadIfNeeded {
   ~AttachCurrentThreadIfNeeded();
 
  private:
-  rtc::ThreadChecker thread_checker_;
+  // rtc::ThreadChecker thread_checker_;
   bool attached_;
 };
 
@@ -50,8 +50,8 @@ class GlobalRef {
   void CallVoidMethod(jmethodID methodID, ...);
 
  private:
-  JNIEnv* const jni_;
-  const jobject j_object_;
+  // JNIEnv* const jni_;
+  // const jobject j_object_;
 };
 
 // Wraps the jclass object on which we can call GetMethodId() functions to
@@ -83,7 +83,7 @@ class NativeRegistration : public JavaClass {
                                        ...);
 
  private:
-  JNIEnv* const jni_;
+  // JNIEnv* const jni_;
 };
 
 // This class is created by the JVM class and is used to expose methods that
@@ -109,8 +109,8 @@ class JNIEnvironment {
   std::string JavaToStdString(const jstring& j_string);
 
  private:
-  rtc::ThreadChecker thread_checker_;
-  JNIEnv* const jni_;
+  // rtc::ThreadChecker thread_checker_;
+  // JNIEnv* const jni_;
 };
 
 // Main class for working with Java from C++ using JNI in WebRTC.
@@ -182,7 +182,7 @@ class JVM {
  private:
   JNIEnv* jni() const { return GetEnv(jvm_); }
 
-  rtc::ThreadChecker thread_checker_;
+  // rtc::ThreadChecker thread_checker_;
   JavaVM* const jvm_;
 };
 
