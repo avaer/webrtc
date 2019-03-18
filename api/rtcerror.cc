@@ -36,6 +36,8 @@ static_assert(static_cast<int>(webrtc::RTCErrorType::INTERNAL_ERROR) ==
 
 namespace webrtc {
 
+RTCError::~RTCError() {}
+
 RTCError::RTCError(RTCError&& other) = default;
 RTCError& RTCError::operator=(RTCError&& other) = default;
 

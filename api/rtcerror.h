@@ -96,6 +96,8 @@ class RTCError {
   RTCError(const RTCError& other) = delete;
   RTCError& operator=(const RTCError& other) = delete;
 
+  ~RTCError();
+
   // Move constructor and move-assignment operator.
   RTCError(RTCError&& other);
   RTCError& operator=(RTCError&& other);
