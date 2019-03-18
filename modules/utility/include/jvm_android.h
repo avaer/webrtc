@@ -32,7 +32,7 @@ class AttachCurrentThreadIfNeeded {
   ~AttachCurrentThreadIfNeeded();
 
  private:
-  rtc::ThreadChecker thread_checker_;
+  // rtc::ThreadChecker thread_checker_;
   bool attached_;
 };
 
@@ -50,15 +50,15 @@ class GlobalRef {
   void CallVoidMethod(jmethodID methodID, ...);
 
  private:
-  JNIEnv* const jni_;
-  const jobject j_object_;
+  // JNIEnv* const jni_;
+  // const jobject j_object_;
 };
 
 // Wraps the jclass object on which we can call GetMethodId() functions to
 // query method IDs.
 class JavaClass {
  public:
-  JavaClass(JNIEnv* jni, jclass clazz) : jni_(jni), j_class_(clazz) {}
+  JavaClass(JNIEnv* jni, jclass clazz) /* : jni_(jni), j_class_(clazz) */ {}
   ~JavaClass() {}
 
   jmethodID GetMethodId(const char* name, const char* signature);
@@ -67,8 +67,8 @@ class JavaClass {
   jint CallStaticIntMethod(jmethodID methodID, ...);
 
  protected:
-  JNIEnv* const jni_;
-  jclass const j_class_;
+  // JNIEnv* const jni_;
+  // jclass const j_class_;
 };
 
 // Adds support of the NewObject factory method to the JavaClass class.
@@ -83,7 +83,7 @@ class NativeRegistration : public JavaClass {
                                        ...);
 
  private:
-  JNIEnv* const jni_;
+  // JNIEnv* const jni_;
 };
 
 // This class is created by the JVM class and is used to expose methods that
@@ -109,8 +109,8 @@ class JNIEnvironment {
   std::string JavaToStdString(const jstring& j_string);
 
  private:
-  rtc::ThreadChecker thread_checker_;
-  JNIEnv* const jni_;
+  // rtc::ThreadChecker thread_checker_;
+  // JNIEnv* const jni_;
 };
 
 // Main class for working with Java from C++ using JNI in WebRTC.
@@ -173,17 +173,17 @@ class JVM {
   JavaClass GetClass(const char* name);
 
   // TODO(henrika): can we make these private?
-  JavaVM* jvm() const { return jvm_; }
+  JavaVM* jvm() const { return nullptr; /*return jvm_;*/ }
 
  protected:
   JVM(JavaVM* jvm);
   ~JVM();
 
  private:
-  JNIEnv* jni() const { return GetEnv(jvm_); }
+  JNIEnv* jni() const { return nullptr; /*return GetEnv(jvm_);*/ }
 
-  rtc::ThreadChecker thread_checker_;
-  JavaVM* const jvm_;
+  // rtc::ThreadChecker thread_checker_;
+  // JavaVM* const jvm_;
 };
 
 }  // namespace webrtc

@@ -30,13 +30,13 @@ namespace audiodevicemodule {
 static pthread_once_t g_initialize_once = PTHREAD_ONCE_INIT;
 
 void EnsureInitializedOnce() {
-  RTC_CHECK(::base::android::IsVMInitialized());
+  /* RTC_CHECK(::base::android::IsVMInitialized());
   JNIEnv* jni = ::base::android::AttachCurrentThread();
   JavaVM* jvm = NULL;
   RTC_CHECK_EQ(0, jni->GetJavaVM(&jvm));
 
   // Initialize the Java environment (currently only used by the audio manager).
-  webrtc::JVM::Initialize(jvm);
+  webrtc::JVM::Initialize(jvm); */
 }
 
 void EnsureInitialized() {
