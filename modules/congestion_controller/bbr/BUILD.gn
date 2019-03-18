@@ -12,18 +12,22 @@ rtc_static_library("bbr") {
   sources = [
     "bbr_factory.cc",
     "bbr_factory.h",
-    "bbr_network_controller.cc",
-    "bbr_network_controller.h",
-    "bandwidth_sampler.cc",
-    "bandwidth_sampler.h",
-    "data_transfer_tracker.cc",
-    "data_transfer_tracker.h",
-    "loss_rate_filter.cc",
-    "loss_rate_filter.h",
-    "rtt_stats.cc",
-    "rtt_stats.h",
-    "windowed_filter.h",
   ]
+  if (!is_android) {
+    sources += [
+      "bbr_network_controller.cc",
+      "bbr_network_controller.h",
+      "bandwidth_sampler.cc",
+      "bandwidth_sampler.h",
+      "data_transfer_tracker.cc",
+      "data_transfer_tracker.h",
+      "loss_rate_filter.cc",
+      "loss_rate_filter.h",
+      "rtt_stats.cc",
+      "rtt_stats.h",
+      "windowed_filter.h",
+    ]
+  }
   deps = [
     ":bbr_controller",
     "../../../api/transport:network_control",
