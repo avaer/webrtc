@@ -2659,9 +2659,9 @@ RTCError PeerConnection::UpdateTransceiverChannel(
     if (!channel) {
       if (transceiver->media_type() == cricket::MEDIA_TYPE_AUDIO) {
         channel = CreateVoiceChannel(content.name);
-      } else {
+      /* } else {
         RTC_DCHECK_EQ(cricket::MEDIA_TYPE_VIDEO, transceiver->media_type());
-        channel = CreateVideoChannel(content.name);
+        channel = CreateVideoChannel(content.name); */
       }
       if (!channel) {
         LOG_AND_RETURN_ERROR(
@@ -5476,7 +5476,7 @@ RTCError PeerConnection::CreateChannels(const SessionDescription& desc) {
     GetAudioTransceiver()->internal()->SetChannel(voice_channel);
   }
 
-  const cricket::ContentInfo* video = cricket::GetFirstVideoContent(&desc);
+  /* const cricket::ContentInfo* video = cricket::GetFirstVideoContent(&desc);
   if (video && !video->rejected &&
       !GetVideoTransceiver()->internal()->channel()) {
     cricket::VideoChannel* video_channel = CreateVideoChannel(video->name);
@@ -5485,7 +5485,7 @@ RTCError PeerConnection::CreateChannels(const SessionDescription& desc) {
                            "Failed to create video channel.");
     }
     GetVideoTransceiver()->internal()->SetChannel(video_channel);
-  }
+  } */
 
   const cricket::ContentInfo* data = cricket::GetFirstDataContent(&desc);
   if (data_channel_type_ != cricket::DCT_NONE && data && !data->rejected &&
